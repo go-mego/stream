@@ -7,7 +7,6 @@ Stream 是一個串流套件，能夠讓你方便地將字串、二進制資料�
 * [安裝方式](#安裝方式)
 * [使用方式](#使用方式)
     * [寫入緩衝區](#寫入緩衝區)
-        * [多型態支援](#多型態支援)
     * [緩衝區沖刷](#緩衝區沖刷)
         * [沖刷與取得](#沖刷與取得)
         * [全部清空](#全部清空)
@@ -38,10 +37,6 @@ func main() {
 	m := mego.New()
 	// 將串流中介軟體作為為全域中介軟體。
 	m.Use(stream.New())
-	// 在任何路由中都可以使用 `*stream.Stream`
-	m.Get("/", func(s *stream.Stream) {
-		// ...
-	})
 	m.Run()
 }
 ```
@@ -52,7 +47,7 @@ func main() {
 func main() {
 	m := mego.New()
 	// 在單個路由中套用串流中介軟體，並使用 `*stream.Stream`
-	m.Get("/", stream.New(), func(s *stream.Stream) {
+	m.GET("/", stream.New(), func(s *stream.Stream) {
 		// ...
 	})
 	m.Run()
@@ -66,8 +61,7 @@ func main() {
 ```go
 func main() {
 	m := mego.New()
-	m.Use(stream.New())
-	m.Get("/", func(s *stream.Stream) {
+	m.GET("/", stream.New(), func(s *stream.Stream) {
 		// 將目前時間寫入串流緩衝區中。
 		s.Write(fmt.Sprintf("%v\n", time.Now()))
 	})
@@ -75,19 +69,17 @@ func main() {
 }
 ```
 
-### 多型態支援
-
 預設的 `Write` 能夠讓你將 `string` 型態的資料寫入串流緩衝區中，但還有其他函式（如：`WriteBytes`）能夠讓你寫入其他形態的內容至緩衝區。
 
 ```go
 func main() {
 	m := mego.New()
-	m.Use(stream.New())
-	m.Get("/", func(s stream.Stream) {
+	m.GET("/", stream.New(), func(s *stream.Stream) {
 		// 將位元組資料寫入串流串流緩衝區。
-        s.WriteBytes([]byte("早安，我的朋友！"))
-        // 將正整數寫入串流緩衝區。
-        s.WriteInt(12345) // s.WriteInt64(), s.WriteUint()...
+		s.WriteBytes([]byte("早安，我的朋友！"))
+		// 將正整數寫入串流緩衝區。
+		// s.WriteInt64(), s.WriteUint() ...
+		s.WriteInt(12345)
 	})
 	m.Run()
 }
@@ -102,14 +94,13 @@ func main() {
 ```go
 func main() {
 	m := mego.New()
-	m.Use(stream.New())
-	m.Get("/", func(s stream.Stream) {
+	m.GET("/", stream.New(), func(s *stream.Stream) {
 		// 在此路由不斷地執行下列程式。
 		for {
 			// 不斷地將目前時間寫入串流緩衝區中。
 			s.Write(fmt.Sprintf("%v\n", time.Now()))
 			// 接著沖刷，將緩衝區的內容寫入串流中。
-            s.Flush()
+			s.Flush()
 			// 接著等待一秒，重複執行上列函式。
 			<-time.After(1 * time.Second)
 		}
@@ -125,12 +116,11 @@ func main() {
 ```go
 func main() {
 	m := mego.New()
-	m.Use(stream.New())
-	m.Get("/", func(s stream.Stream) {
+	m.GET("/", stream.New(), func(s *stream.Stream) {
 		// 將目前時間寫入串流緩衝區中。
-        s.Write(fmt.Sprintf("%v\n", time.Now()))
-        // 取得緩衝區資料並且沖刷至客戶端。
-        fmt.Println(s.GetAndFlush()) // 結果：2018-04-21 15:37:42 +0000 UTC m=+0.000000001
+		s.Write(fmt.Sprintf("%v\n", time.Now()))
+		// 取得緩衝區資料並且沖刷至客戶端。
+		fmt.Println(s.GetAndFlush()) // 結果：2018-04-21 15:37:42 +0000 UTC m=+0.000000001
 	})
 	m.Run()
 }
@@ -143,12 +133,11 @@ func main() {
 ```go
 func main() {
 	m := mego.New()
-	m.Use(stream.New())
-	m.Get("/", func(s stream.Stream) {
+	m.GET("/", stream.New(), func(s *stream.Stream) {
 		// 將目前時間寫入串流緩衝區中。
-        s.Write(fmt.Sprintf("%v\n", time.Now()))
-        // 清空緩衝區資料。
-        s.Clean()
+		s.Write(fmt.Sprintf("%v\n", time.Now()))
+		// 清空緩衝區資料。
+		s.Clean()
 		// 此時沖刷至客戶端並不會有任何資料。
 		s.Flush()
 	})
@@ -163,13 +152,12 @@ func main() {
 ```go
 func main() {
 	m := mego.New()
-	m.Use(stream.New())
-	m.Get("/", func(s stream.Stream) {
+	m.GET("/", stream.New(), func(s *stream.Stream) {
 		// 將目前時間寫入串流緩衝區中。
-        s.Write(fmt.Sprintf("%v\n", time.Now()))
-        // 清空並取得且顯示緩衝區資料。
-        fmt.Println(s.GetAndClean()) // 結果：2018-04-21 15:37:42 +0000 UTC m=+0.000000001
-        // 此時沖刷至客戶端並不會有任何資料。
+		s.Write(fmt.Sprintf("%v\n", time.Now()))
+		// 清空並取得且顯示緩衝區資料。
+		fmt.Println(s.GetAndClean()) // 結果：2018-04-21 15:37:42 +0000 UTC m=+0.000000001
+		// 此時沖刷至客戶端並不會有任何資料。
 		s.Flush()
 	})
 	m.Run()
@@ -183,11 +171,10 @@ func main() {
 ```go
 func main() {
 	m := mego.New()
-	m.Use(stream.New())
-	m.Get("/", func(s stream.Stream) {
+	m.GET("/", stream.New(), func(s *stream.Stream) {
 		// 將目前時間寫入串流緩衝區中。
-        s.Write(fmt.Sprintf("%v\n", time.Now()))
-        // 取得緩衝區的長度。
+		s.Write(fmt.Sprintf("%v\n", time.Now()))
+		// 取得緩衝區的長度。
 		fmt.Println(s.Length()) // 結果：45
 	})
 	m.Run()
